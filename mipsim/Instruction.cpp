@@ -142,7 +142,10 @@ string Instruction::str() {
  * between bit positions hi and lo, inclusive
  */
 unsigned Instruction::bitRange(unsigned hi, unsigned lo) {
-  return raw;
+  unsigned result;
+  result = raw << (31 - hi);
+  result = result >> (31 - hi + lo);
+  return result;
 }
 
 /*
@@ -150,7 +153,12 @@ unsigned Instruction::bitRange(unsigned hi, unsigned lo) {
  * to 32 bits and return it
  */
 unsigned Instruction::signExtend8(unsigned n) {
-  return n;
+  int result = 0x000000ff & n;
+  int che = 0x00000080 & n;
+  if (che == 0x00000080) {
+    result = result | 0xffffff00;
+  }
+  return result;
 }
 
 /*
@@ -158,6 +166,11 @@ unsigned Instruction::signExtend8(unsigned n) {
  * to 32 bits and return it
  */
 unsigned Instruction::signExtend16(unsigned n) {
-  return n;
+  int result = 0x0000ffff & n;
+  int che = 0x00008000 & n;
+  if (che == 0x00008000) {
+    result = result | 0xffff000;
+  }    
+  return result;
 }
 
