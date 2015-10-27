@@ -7,17 +7,9 @@
 
 #include "Instruction.h"
 #include <iomanip>
+#include "RegFile.h"
+#include "Memory.h"
 
-const char* ITokenName[] = {
-    "NONE", "sll", "srl", "jr", "add", "addu", "sub", "subu", "and",
-    "or", "xor", "nor", "slt", "sltu", "j", "jal", "beq",
-    "bne", "addi", "addiu", "slti", "sltiu", "andi", "ori", "xori",
-    "lui", "lb", "lh", "lw", "lbu", "lhu", "sb", "sh", "sw",
-    "syscall"
-};
-
-const char* IFormatName[] = { "NONE", "R_TYPE", "I_TYPE", "J_TYPE" };
-const char* XTypeName[] =   { "NONE", "ALU", "SHIFT", "LOAD", "STORE", "BRANCH", "JUMP", "OTHER" };
 
 /*
  * This procedure should decode the 32-bit instruction
@@ -280,6 +272,50 @@ string Instruction::str() {
     s.insert(s.end(), 32 - s.size(), ' ');
     return s;
 }
+string Instruction::resultStr() {
+	char buf[64];
+	switch (format) {
+  case R_TYPE:
+			switch (xtype) {
+    case ALU:
+    case SHIFT:
+					sprintf(buf, "| $%u = 0x%x", rd, reg[rd]);
+					break;
+    case JUMP:
+					sprintf(buf, "| pc = %08x", pc);
+					break;
+    default:
+					sprintf(buf, "|");
+					break;
+			}
+			break;
+  case I_TYPE:
+			switch (xtype) {
+    case ALU:
+    case LOAD:
+					sprintf(buf, "| $%u = 0x%x", rt, reg[rt]);
+					break;
+    case STORE:
+					sprintf(buf, "| M[%08x] = 0x%08x", reg[rs]+imm, M.read32(reg[rs]+imm));
+					break;
+    case BRANCH:
+					sprintf(buf, "| pc = %08x", pc);
+					break;
+    default:
+					sprintf(buf, "unformatted");
+					break;
+			}
+			break;
+  case J_TYPE:
+			sprintf(buf, "| pc = %08x", pc);
+			break;
+  default:
+			sprintf(buf, "|");
+			break;
+	}
+	return string(buf);
+}
+
 
 /*
  * This function should operate on the 32-bit raw value
@@ -287,10 +323,8 @@ string Instruction::str() {
  * between bit positions hi and lo, inclusive
  */
 unsigned Instruction::bitRange(unsigned hi, unsigned lo) {
-    unsigned result;
-    result = raw << (31 - hi);
-    result = result >> (31 - hi + lo);
-    return result;
+	unsigned mask = (1 << (hi - lo +1)) - 1;
+	return (raw >> lo) & mask;
 }
 
 /*
@@ -317,5 +351,127 @@ unsigned Instruction::signExtend16(unsigned n) {
         result = result | 0xffff0000;
     }    
     return result;
+}
+
+bool Instruction::exec() {
+	//
+	// NOTE: Assumes pc has been pre-incremented
+	// Important for branch instruction operation
+	//
+	bool keepGoing = true;
+	pc += 4;
+	switch(token) {
+  case SLL:
+			reg[rd] = reg[rt] << shamt;
+			break;
+  case SRL:
+			reg[rd] = reg[rt] >> shamt;
+			break;
+  case ADD:
+			reg[rd] = reg[rs] + reg[rt];
+			break;
+  case ADDU:
+			reg[rd] = reg[rs] + reg[rt];
+			break;
+  case SUB:
+			reg[rd] = reg[rs] - reg[rt];
+			break;
+  case SUBU:
+			reg[rd] = reg[rs] - reg[rt];
+			break;
+  case AND:
+			reg[rd] = reg[rs] & reg[rt];
+			break;
+  case OR:
+			reg[rd] = reg[rs] | reg[rt];
+			break;
+  case XOR:
+			reg[rd] = reg[rs] ^ reg[rt];
+			break;
+  case NOR:
+			reg[rd] = ~(reg[rs] | reg[rt]);
+			break;
+  case SLT:
+			reg[rd] = ((int) reg[rs] < (int) reg[rt]) ? 1 : 0;
+			break;
+  case SLTU:
+			reg[rd] =(reg[rs] < reg[rt])? 1:0;
+			break;
+  case JR:
+			pc = reg[rs];
+			break;
+  case J:
+			pc= (target << 2) | (pc & 0xf00000000);
+			break;
+  case JAL:
+			reg[31] =pc; // pc has been pre incrmented
+			pc= (target << 2) | (pc & 0xf00000000);
+			break;
+  case BEQ:
+			// note pc was pre-incremented, need to subtract 4 from branch offset
+			pc = (reg[rs] == reg[rt])? pc + (signExtend16(imm)) << 2) -4: pc;
+			break;
+  case BNE:
+			// note pc was pre-incremented, need to subtract 4 from branch offset
+			pc = (reg[rs] != reg[rt])? pc + (signExtend16(imm)) << 2) -4: pc;
+			break;
+  case ADDI:
+			reg[rt] = reg[rs] + signExtend16(imm);
+			break;
+  case ADDIU:
+			reg[rt] = reg[rs] + signExtend16(imm);
+			break;
+  case SLTI:
+			reg[rt]= ((int) reg[rs] < (int) signExtend16(imm)) ? 1:0;
+			break;
+  case SLTIU:
+			reg[rt]= (reg[rs] < signExtend16(imm)) ? 1:0;
+			break;
+  case ANDI:
+			reg[rt] = reg[rs] & imm;
+			break;
+  case ORI:
+			reg[rt] = reg[rs] | imm;
+			break;
+  case XORI:
+			reg[rt] = reg[rs] ^ imm;
+			break;
+  case LUI:
+			reg[rt] = (imm << 16);
+			break;
+  case LB:
+			reg[rt] = signExtend8(M.read8(reg[rs] + signExtend16(imm)));
+			break;
+  case LH:
+			reg[rt] = signExtend16(M.read16(reg[rs] + signExtend16(imm)));
+			break;
+  case LW:
+			reg[rt] = M.read32(reg[rs] + signExtend16(imm));
+			break;
+  case LBU:
+			reg[rt] = M.read8(reg[rs] + signExtend16(imm));
+			break;
+  case LHU:
+			reg[rt] = M.read16(reg[rs] + signExtend16(imm));
+			break;
+  case SB:
+			M.write8(reg[rt], reg[rs]+ signExtend16(imm))
+			break;
+  case SH:
+			M.write16(reg[rt], reg[rs]+ signExtend16(imm))
+			break;
+  case SW:
+			M.write32(reg[rt], reg[rs]+ signExtend16(imm))
+			break;
+  case SYSCALL:
+			keepGoing = false;
+			break;
+  default:
+			break;
+	}
+	++instructionCount;
+	++itokenCounts[token];
+	++xtypeCounts[xtype];
+	return keepGoing;
 }
 
