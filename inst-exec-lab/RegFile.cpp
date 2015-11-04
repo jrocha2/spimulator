@@ -12,6 +12,10 @@ RegFile::RegFile() {
 }
 
 uint32_t& RegFile::operator [](unsigned i) {
+  if (i == 0)
+  {
+    A[0] = 0;
+  }
   return A[i];
 }
 

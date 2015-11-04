@@ -409,11 +409,11 @@ bool Instruction::exec() {
 			break;
   case BEQ:
 			// note pc was pre-incremented, need to subtract 4 from branch offset
-			pc = (reg[rs] == reg[rt])? (pc + (signExtend16(imm)) << 2) -4: pc;
+			pc = (reg[rs] == reg[rt])? (pc + (signExtend16(imm) << 2)) -4: pc;
 			break;
   case BNE:
 			// note pc was pre-incremented, need to subtract 4 from branch offset
-			pc = (reg[rs] != reg[rt]) ? (pc + (signExtend16(imm)) << 2) -4: pc;
+			pc = (reg[rs] != reg[rt]) ? (pc + (signExtend16(imm) << 2)) -4: pc;
 			break;
   case ADDI:
 			reg[rt] = reg[rs] + signExtend16(imm);
