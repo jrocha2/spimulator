@@ -31,7 +31,7 @@
     rd      (bitRange(15, 11)),
     shamt   (bitRange(10,6)),
     imm     (bitRange(15,0)),
-    target  (bitRange(15,0))
+    target  (bitRange(25,0))
 {
     switch (opcode) {
         case 0:
@@ -401,11 +401,11 @@ bool Instruction::exec() {
 			pc = reg[rs];
 			break;
   case J:
-			pc= (target << 2) | (pc & 0xf00000000);
+			pc= (target << 2) | (pc & 0xf0000000);
 			break;
   case JAL:
 			reg[31] =pc; // pc has been pre incrmented
-			pc= (target << 2) | (pc & 0xf00000000);
+			pc= (target << 2) | (pc & 0xf0000000);
 			break;
   case BEQ:
 			// note pc was pre-incremented, need to subtract 4 from branch offset
