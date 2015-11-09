@@ -157,47 +157,47 @@
         case 15:
             token = LUI;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = LOAD;
             break;
         case 32:
             token = LB;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = LOAD;
             break;
         case 33:
             token = LH;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = LOAD;
             break;
         case 35:
             token = LW;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = LOAD;
             break;
         case 36:
             token = LBU;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = LOAD;
             break;
         case 37:
             token = LHU;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = LOAD;
             break;
         case 40:
             token = SB;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = STORE;
             break;
         case 41:
             token = SH;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = STORE;
             break;
         case 43:
             token = SW;
             format = I_TYPE;
-            xtype = ALU;
+            xtype = STORE;
             break;
 
             // Add remaining cases for opcodes
