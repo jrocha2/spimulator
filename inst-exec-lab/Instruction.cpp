@@ -157,7 +157,7 @@
         case 15:
             token = LUI;
             format = I_TYPE;
-            xtype = LOAD;
+            xtype = ALU;
             break;
         case 32:
             token = LB;
