@@ -207,14 +207,19 @@ void printHelp()
   exit(0);
 }
 
-void ryanTest()
+void cacheWorkingTest()
 {
     Cache cache(2, 3);
-    cache.checkHit(0x00000001); TESTEQ(cache.tagArray[0],0);
-    cache.checkHit(0x00000001); TESTEQ(cache.tagArray[0],0);
-    cache.checkHit(0x00000011); TESTEQ(cache.tagArray[0],0);
-    cache.checkHit(0x00000011); TESTEQ(cache.tagArray[0],0);
-    cache.checkHit(0x12345678); TESTEQ(cache.tagArray[0],0);
+    TESTEQ(cache.checkHit(0x00000001),false); 
+    TESTEQ(cache.checkHit(0x00000001),true); 
+    TESTEQ(cache.checkHit(0x00000011),false); 
+    TESTEQ(cache.checkHit(0x00000011),true);
+    TESTEQ(cache.checkHit(0x12345678),false);
+    TESTEQ(cache.checkHit(0x00000011),true); 
+    TESTEQ(cache.checkHit(0x00300011),false); 
+    TESTEQ(cache.checkHit(0x00000011),false); 
+    TESTEQ(cache.checkHit(0x00000001),true);
+    TESTEQ(cache.checkHit(0x12345678),true);
 }
 
 
@@ -255,6 +260,7 @@ int main(int argc, char **argv)
     case 't' :
       bareMachineMode = false;
       instructionExecTest();
+      cacheWorkingTest();
       return 0;
     case 's' :
       bareMachineMode = false;
@@ -287,7 +293,8 @@ int main(int argc, char **argv)
   }
 
   assert(argc > 1 && "need to specify input file");
-  char* infile = argv[optind];
+  char* infile = argv[argc - 1];
+  cout << optind << endl;
 
   M.initCache(iCacheLogDepth, iCacheLogBlksize, dCacheLogDepth, dCacheLogBlksize);
 

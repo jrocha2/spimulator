@@ -24,19 +24,20 @@ Cache::~Cache() {
 }
 
 bool Cache::checkHit(unsigned addr) {
-  unsigned index = (1 << (logDepth + logBlockSize - 1 - logDepth + 1)) - 1;
-  index = (addr >> logDepth) & index;
+  unsigned index = (1 << (logDepth + logBlockSize - 1 - logBlockSize + 1)) - 1;
+  index = (addr >> logBlockSize) & index;
 
   unsigned tag = (1 << (31 - logDepth + logBlockSize + 1)) - 1;
   tag = (addr >> logDepth + logBlockSize) & tag;
 
-  if (tagArray[index] == tag) {
+  if (tagArray[index] == tag && validArray[index]) {
       hits++;
       accesses++;
       return true;
   } else {
       accesses++;
       tagArray[index] = tag;
+      validArray[index] = true;
       return false;
   }
 }
