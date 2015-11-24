@@ -207,6 +207,17 @@ void printHelp()
   exit(0);
 }
 
+void ryanTest()
+{
+    Cache cache(2, 3);
+    cache.checkHit(0x00000001); TESTEQ(cache.tagArray[0],0);
+    cache.checkHit(0x00000001); TESTEQ(cache.tagArray[0],0);
+    cache.checkHit(0x00000011); TESTEQ(cache.tagArray[0],0);
+    cache.checkHit(0x00000011); TESTEQ(cache.tagArray[0],0);
+    cache.checkHit(0x12345678); TESTEQ(cache.tagArray[0],0);
+}
+
+
 int main(int argc, char **argv)
 {
   int opt;
